@@ -4,9 +4,395 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>運勢カレンダー 2026</title>
+  <style>
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+      padding:16px;
+      line-height:1.6;
+      background:#fafafa;
+      color:#111;
+    }
+    h1{ margin:0 0 4px; font-size:26px; }
+    .sub{ margin:0 0 14px; color:#555; font-size:14px; }
+
+    .toolbar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin:12px 0 16px;
+      position:sticky;
+      top:0;
+      background:#fafafa;
+      padding:10px 0;
+      z-index:10;
+      border-bottom:1px solid #eee;
+    }
+    select,button{
+      font-size:16px;
+      padding:10px 12px;
+      border:1px solid #ddd;
+      background:#fff;
+      border-radius:10px;
+    }
+    button{ cursor:pointer; }
+    button:active{ transform:translateY(1px); }
+
+    .monthTitle{
+      margin:14px 0 10px;
+      font-size:18px;
+      font-weight:700;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background:#f1f1f1;
+      color:#333;
+      white-space:nowrap;
+    }
+
+    ul{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+    .card{
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:14px;
+      padding:12px 12px;
+      box-shadow:0 2px 10px rgba(0,0,0,0.03);
+    }
+    .row1{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .date{
+      font-weight:800;
+      font-size:16px;
+      letter-spacing:0.2px;
+    }
+    .badge{
+      font-size:12px;
+      padding:4px 8px;
+      border-radius:999px;
+      background:#f2f2f2;
+      color:#333;
+      white-space:nowrap;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-top:10px;
+    }
+    .box{
+      border:1px solid #eee;
+      border-radius:12px;
+      padding:10px;
+      background:#fcfcfc;
+    }
+    .label{
+      font-size:12px;
+      color:#666;
+      margin:0 0 2px;
+    }
+    .value{
+      font-size:14px;
+      font-weight:700;
+      margin:0;
+      word-break:break-word;
+    }
+    .rowInline{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-top:8px;
+      color:#444;
+      font-size:13px;
+      flex-wrap:wrap;
+    }
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,0.12);
+      flex:0 0 auto;
+    }
+
+    /* ② 今日を強調 */
+    .today{
+      border:2px solid #111;
+      box-shadow:0 8px 22px rgba(0,0,0,0.10);
+    }
+    .today .badge{
+      background:#111;
+      color:#fff;
+    }
+
+    .hint{
+      font-size:12px;
+      color:#666;
+      margin-top:10px;
+    }
+  </style>
 </head>
 <body>
   <h1>運勢カレンダー 2026</h1>
-  <p>ここから少しずつ作っていきます。</p>
+  <p class="sub">①ラッキーカラー / ②今日を強調 / ③月切り替え / ④365日分を自動生成</p>
+
+  <div class="toolbar">
+    <button id="prev">← 前の月</button>
+    <select id="monthSelect" aria-label="月を選ぶ"></select>
+    <button id="next">次の月 →</button>
+    <button id="goToday">今日へ</button>
+  </div>
+
+  <div class="monthTitle">
+    <div id="monthTitle"></div>
+    <div class="pill" id="monthTheme"></div>
+  </div>
+
+  <div id="calendar"></div>
+  <div class="hint">※ 2026年以外の日付の端末だと「今日へ」は 2026/1/1 に移動します。</div>
+
+  <script>
+    // =========================
+    // ④ 365日分：生成ルール
+    // =========================
+
+    // 月テーマ（例：あなたの仕様に合わせて後で自由に変更OK）
+    const monthThemes = [
+      "整える",  // 1
+      "準備",    // 2
+      "始動",    // 3
+      "加速",    // 4
+      "発信",    // 5
+      "交渉",    // 6
+      "育てる",  // 7
+      "磨く",    // 8
+      "再構築",  // 9
+      "前進",    // 10
+      "仕上げ",  // 11
+      "余白"     // 12
+    ];
+
+    // 優先カテゴリ（2日ごとに切り替え）
+    const priorityCategories = ["恋愛", "仕事", "対人", "心身", "自分"];
+
+    // 運勢文テンプレ（吉/NG）
+    const goodTemplates = [
+      "ランチの誘いが良い刺激に",
+      "手を動かすほど整っていく",
+      "先に挨拶すると流れが良い",
+      "小さな片づけが大きな余裕に",
+      "一つ決めると迷いが減る",
+      "早めの連絡が安心につながる",
+      "静かな時間がヒントになる"
+    ];
+    const ngTemplates = [
+      "噂話には加わらないこと",
+      "急いで返事を決めない",
+      "無理に結論を出さない",
+      "完璧を目指しすぎない",
+      "疲れを見て見ぬふりしない",
+      "比較で気持ちを削らない",
+      "夜更かしは控える"
+    ];
+
+    // ラッキーカラー（①）
+    const luckyColors = [
+      { name: "レッド", hex: "#e53935" },
+      { name: "ブルー", hex: "#1e88e5" },
+      { name: "グリーン", hex: "#43a047" },
+      { name: "イエロー", hex: "#fdd835" },
+      { name: "パープル", hex: "#8e24aa" },
+      { name: "オレンジ", hex: "#fb8c00" },
+      { name: "ブラック", hex: "#111111" },
+      { name: "ホワイト", hex: "#ffffff" },
+      { name: "グレー", hex: "#9e9e9e" },
+      { name: "ピンク", hex: "#ec407a" }
+    ];
+
+    // 方向（例：8方位）+ 五行風のラベル
+    const directions = [
+      { dir:"北",   element:"水の気" },
+      { dir:"北東", element:"土の気" },
+      { dir:"東",   element:"木の気" },
+      { dir:"南東", element:"木の気" },
+      { dir:"南",   element:"火の気" },
+      { dir:"南西", element:"土の気" },
+      { dir:"西",   element:"金の気" },
+      { dir:"北西", element:"金の気" }
+    ];
+
+    // =========================
+    // 画面・状態
+    // =========================
+    const year = 2026;
+    const calendar = document.getElementById("calendar");
+    const monthTitle = document.getElementById("monthTitle");
+    const monthThemeEl = document.getElementById("monthTheme");
+    const monthSelect = document.getElementById("monthSelect");
+
+    const now = new Date();
+    const isYear2026 = now.getFullYear() === year;
+    const todayMonth = isYear2026 ? now.getMonth() : 0;
+    const todayDate  = isYear2026 ? now.getDate()  : 1;
+
+    let currentMonth = todayMonth;
+
+    for (let m = 0; m < 12; m++) {
+      const opt = document.createElement("option");
+      opt.value = String(m);
+      opt.textContent = `${m + 1}月`;
+      monthSelect.appendChild(opt);
+    }
+
+    function pad2(n){ return String(n).padStart(2, "0"); }
+
+    // 年内通し番号（1/1=0）
+    function dayOfYear(date){
+      const start = new Date(date.getFullYear(), 0, 1);
+      const diff = date - start;
+      return Math.floor(diff / 86400000);
+    }
+
+    // その日のデータを生成（ここが「④」）
+    function buildFortune(date){
+      const doy = dayOfYear(date); // 0..364
+      const m = date.getMonth();   // 0..11
+      const d = date.getDate();
+
+      // 2日ごとにカテゴリ切替
+      const cat = priorityCategories[Math.floor(doy / 2) % priorityCategories.length];
+
+      // 文章・色・方位を決定（シンプルに回す）
+      const good = goodTemplates[(doy + m) % goodTemplates.length];
+      const ng   = ngTemplates[(doy + d) % ngTemplates.length];
+      const color = luckyColors[(doy * 3 + m) % luckyColors.length];
+      const dir = directions[(doy + m) % directions.length];
+
+      return {
+        dateStr: `${year}/${pad2(m+1)}/${pad2(d)}`,
+        theme: monthThemes[m],
+        good,
+        ng,
+        category: cat,
+        color,
+        direction: dir.dir,
+        element: dir.element
+      };
+    }
+
+    function renderMonth(monthIndex){
+      currentMonth = monthIndex;
+      monthSelect.value = String(monthIndex);
+      monthTitle.textContent = `${monthIndex + 1}月`;
+      monthThemeEl.textContent = `今月のテーマ：${monthThemes[monthIndex]}`;
+
+      calendar.innerHTML = "";
+      const ul = document.createElement("ul");
+
+      const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+      for (let day = 1; day <= daysInMonth; day++){
+        const date = new Date(year, monthIndex, day);
+        const data = buildFortune(date);
+
+        const card = document.createElement("li");
+        card.className = "card";
+
+        const isToday = isYear2026 && monthIndex === todayMonth && day === todayDate;
+        if (isToday) card.classList.add("today");
+
+        const row1 = document.createElement("div");
+        row1.className = "row1";
+
+        const dateEl = document.createElement("div");
+        dateEl.className = "date";
+        dateEl.textContent = data.dateStr;
+
+        const badge = document.createElement("div");
+        badge.className = "badge";
+        badge.textContent = isToday ? "今日" : "運勢";
+
+        row1.appendChild(dateEl);
+        row1.appendChild(badge);
+
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        const boxTheme = document.createElement("div");
+        boxTheme.className = "box";
+        boxTheme.innerHTML = `<p class="label">テーマ</p><p class="value">${data.theme}</p>`;
+
+        const boxCat = document.createElement("div");
+        boxCat.className = "box";
+        boxCat.innerHTML = `<p class="label">優先カテゴリ</p><p class="value">${data.category}</p>`;
+
+        const boxGood = document.createElement("div");
+        boxGood.className = "box";
+        boxGood.innerHTML = `<p class="label">吉</p><p class="value">${data.good}</p>`;
+
+        const boxNg = document.createElement("div");
+        boxNg.className = "box";
+        boxNg.innerHTML = `<p class="label">NG</p><p class="value">${data.ng}</p>`;
+
+        grid.appendChild(boxTheme);
+        grid.appendChild(boxCat);
+        grid.appendChild(boxGood);
+        grid.appendChild(boxNg);
+
+        const rowInline = document.createElement("div");
+        rowInline.className = "rowInline";
+
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = data.color.hex;
+        if (data.color.hex.toLowerCase() === "#ffffff") dot.style.border = "1px solid #bbb";
+
+        const colorText = document.createElement("span");
+        colorText.textContent = `ラッキーカラー：${data.color.name}`;
+
+        const dirText = document.createElement("span");
+        dirText.textContent = `おすすめ方角：${data.direction}（${data.element}）`;
+
+        rowInline.appendChild(dot);
+        rowInline.appendChild(colorText);
+        rowInline.appendChild(document.createTextNode(" / "));
+        rowInline.appendChild(dirText);
+
+        card.appendChild(row1);
+        card.appendChild(grid);
+        card.appendChild(rowInline);
+
+        ul.appendChild(card);
+      }
+
+      calendar.appendChild(ul);
+
+      // 今日がある月のときは、今日カードへスクロール
+      if (isYear2026 && monthIndex === todayMonth) {
+        const todayCard = calendar.querySelector(".today");
+        if (todayCard) todayCard.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+
+    // 操作
+    monthSelect.addEventListener("change", (e) => renderMonth(Number(e.target.value)));
+    document.getElementById("prev").addEventListener("click", () => renderMonth((currentMonth + 11) % 12));
+    document.getElementById("next").addEventListener("click", () => renderMonth((currentMonth + 1) % 12));
+    document.getElementById("goToday").addEventListener("click", () => renderMonth(todayMonth));
+
+    // 初期表示
+    renderMonth(currentMonth);
+  </script>
 </body>
 </html>
