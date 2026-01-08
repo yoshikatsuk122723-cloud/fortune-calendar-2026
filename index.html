@@ -25,7 +25,7 @@
       color:var(--text);
       padding:16px;
     }
-    .wrap{ max-width:760px; margin:0 auto; }
+    .wrap{ max-width:820px; margin:0 auto; }
     header{ margin:10px 0 14px; }
     h1{ font-size:28px; margin:0 0 6px; letter-spacing:.02em; }
     .lead{ margin:0; color:var(--sub); line-height:1.7; }
@@ -35,7 +35,7 @@
       display:inline-flex; align-items:center; gap:6px;
       padding:6px 10px; border-radius:999px;
       border:1px solid var(--line); background:#fff;
-      color:var(--sub); font-size:12px; font-weight:700;
+      color:var(--sub); font-size:12px; font-weight:800;
     }
     .chip.accent{ border-color:rgba(99,102,241,.35); background:rgba(99,102,241,.10); color:var(--accent); }
     .chip.good{ border-color:rgba(22,163,74,.30); background:rgba(22,163,74,.10); color:var(--good); }
@@ -70,7 +70,43 @@
     .dot.good{ background:var(--good); }
     .dot.ng{ background:var(--ng); }
 
-    /* Calendar */
+    /* color swatch */
+    .swatch{
+      width:12px; height:12px; border-radius:999px;
+      display:inline-block; vertical-align:middle;
+      border:1px solid rgba(0,0,0,.15);
+      margin-right:6px;
+      background: var(--swatch, #fff);
+    }
+
+    /* toolbar */
+    .toolbar{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      position:sticky;
+      top:0;
+      background:var(--bg);
+      padding:10px 0;
+      z-index:10;
+      border-bottom:1px solid #eee;
+      margin:10px 0 12px;
+    }
+    select,button{
+      font-size:15px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      font-weight:800;
+      color:var(--text);
+      cursor:pointer;
+      user-select:none;
+    }
+    button:active{ transform: translateY(1px); }
+
+    /* calendar */
     .cal-head{
       display:flex;
       align-items:center;
@@ -78,21 +114,12 @@
       gap:10px;
       margin-bottom:10px;
     }
-    .btn{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:12px;
-      padding:8px 10px;
-      font-weight:800;
-      color:var(--text);
-      cursor:pointer;
-      user-select:none;
-    }
-    .btn:active{ transform: translateY(1px); }
     .month-title{
       font-weight:900;
       font-size:16px;
       letter-spacing:.02em;
+      text-align:center;
+      flex:1;
     }
     .grid{
       display:grid;
@@ -102,7 +129,7 @@
     .dow{
       font-size:12px;
       color:var(--sub);
-      font-weight:800;
+      font-weight:900;
       text-align:center;
       padding:6px 0;
     }
@@ -124,6 +151,7 @@
       border-color:transparent;
       color:transparent;
       cursor:default;
+      min-height:52px;
     }
     .day.selected{
       border-color: rgba(99,102,241,.55);
@@ -136,16 +164,13 @@
       position:absolute;
       bottom:8px;
     }
-
-    .split{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap:12px;
+    .day .tiny{
+      position:absolute;
+      top:8px;
+      right:8px;
+      width:8px;height:8px;border-radius:999px;
+      background: rgba(0,0,0,.08);
     }
-    @media (min-width: 740px){
-      .split{ grid-template-columns: 1.2fr .8fr; align-items:start; }
-    }
-
     .kv{
       display:flex;
       justify-content:space-between;
@@ -156,14 +181,21 @@
       background:#fff;
       margin-top:10px;
     }
-    .kv .k{ color:var(--sub); font-size:12px; font-weight:800; }
+    .kv .k{ color:var(--sub); font-size:12px; font-weight:900; }
     .kv .v{ font-weight:900; }
+
+    .split{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:12px;
+    }
+    @media (min-width: 840px){
+      .split{ grid-template-columns: 1.1fr .9fr; align-items:start; }
+    }
 
     ul{ margin:10px 0 0; padding-left:18px; }
     li{ line-height:1.7; }
-
     footer{ margin:16px 0 6px; text-align:center; color:var(--sub); font-size:12px; }
-    a{ color:var(--accent); text-decoration:none; }
   </style>
 </head>
 
@@ -171,20 +203,27 @@
   <div class="wrap">
     <header>
       <h1>運勢カレンダー 2026</h1>
-      <p class="lead">日付をタップすると、その日の運勢が表示されます。</p>
+      <p class="lead">日付をタップすると、その日の「吉 / NG / ラッキーカラー / アドバイス」が日替わりで表示されます。</p>
       <div class="row" style="margin-top:10px;">
-        <span class="chip accent" id="monthTheme">今月のテーマ：整える</span>
+        <span class="chip accent" id="monthThemeChip">今月のテーマ：整える</span>
         <span class="chip" id="priorityChip">優先：対人</span>
       </div>
     </header>
+
+    <div class="toolbar">
+      <button id="prevBtn">← 前の月</button>
+      <select id="monthSelect" aria-label="月を選ぶ"></select>
+      <button id="nextBtn">次の月 →</button>
+      <button id="goTodayBtn">今日へ</button>
+    </div>
 
     <div class="split">
       <!-- Calendar -->
       <div class="card">
         <div class="cal-head">
-          <button class="btn" id="prevBtn">← 前</button>
+          <div style="width:72px;"></div>
           <div class="month-title" id="monthTitle">2026年1月</div>
-          <button class="btn" id="nextBtn">次 →</button>
+          <div style="width:72px;"></div>
         </div>
 
         <div class="grid" id="dowRow">
@@ -207,21 +246,28 @@
 
       <!-- Fortune -->
       <div class="card">
-        <h2>今日の運勢</h2>
+        <h2 id="fortuneTitle">今日の運勢</h2>
 
         <div class="box good" style="margin-bottom:10px;">
-          <div class="label"><span class="dot good"></span><span id="goodTitle">吉</span></div>
+          <div class="label"><span class="dot good"></span>吉</div>
           <div id="goodText">-</div>
         </div>
 
         <div class="box ng">
-          <div class="label"><span class="dot ng"></span><span id="ngTitle">NG</span></div>
+          <div class="label"><span class="dot ng"></span>NG</div>
           <div id="ngText">-</div>
         </div>
 
         <div class="row" style="margin-top:10px;">
           <span class="chip" id="luckyColorChip">ラッキーカラー：-</span>
           <span class="chip" id="categoryChip">カテゴリ：-</span>
+          <span class="chip" id="themeChip">テーマ：-</span>
+        </div>
+
+        <div class="box" style="margin-top:10px;">
+          <div class="label">アドバイス</div>
+          <div id="adviceText">-</div>
+          <div style="color:#6b7280;font-size:12px;margin-top:6px;" id="oneLinerText">-</div>
         </div>
 
         <ul id="tipsList"></ul>
@@ -232,114 +278,286 @@
   </div>
 
   <script>
-    // ===== 基本設定 =====
+    // =========================
+    // 2026 Fortune Calendar (Single-file)
+    // =========================
     const YEAR = 2026;
 
-    // 月テーマ（例：12ヶ月）
+    // 月テーマ（12ヶ月）
     const monthThemes = [
-      "整える","整える","芽吹く","加速","刷新","守る",
-      "育てる","広げる","整う","収穫","磨く","締める"
+      "整える","準備","始動","加速","信頼","対話","調和","回収","再構築","集中","締め","余韻"
     ];
 
-    // 優先カテゴリ（例：月ごと）
-    const monthPriority = [
-      "対人","仕事","自分","対人","仕事","自分",
-      "対人","仕事","自分","対人","仕事","自分"
-    ];
+    // 週リズム：恋愛を週2回くらい混ぜる
+    // 日=心身 / 月=仕事 / 火=恋愛 / 水=対人 / 木=仕事 / 金=恋愛 / 土=自分
+    const categoryByDow = ["心身","仕事","恋愛","対人","仕事","恋愛","自分"];
 
-    // 九星（簡易：月ごとにローテーション例）
-    const directions = ["北","北東","東","南東","南","南西","西","北西"];
-    function getDirection(date){
-      // 日にちで回す（簡易ロジック）
-      const idx = (date.getMonth() * 31 + date.getDate()) % directions.length;
-      return directions[idx];
-    }
-
-    // ラッキーカラー（簡易：カテゴリで決める）
-    const colorByCategory = {
-      "対人":"グレー",
-      "仕事":"ネイビー",
-      "自分":"アイボリー"
+    // カテゴリ別カラーパレット（色コード付き）
+    const palette = {
+      恋愛: [
+        { name:"ローズ", hex:"#ec407a" },
+        { name:"ワイン", hex:"#8e0038" },
+        { name:"ピーチ", hex:"#ff8a80" },
+        { name:"ラベンダー", hex:"#9575cd" }
+      ],
+      仕事: [
+        { name:"ネイビー", hex:"#1f3a93" },
+        { name:"スチール", hex:"#607d8b" },
+        { name:"チャコール", hex:"#374151" },
+        { name:"ホワイト", hex:"#ffffff" }
+      ],
+      対人: [
+        { name:"グリーン", hex:"#43a047" },
+        { name:"ミント", hex:"#2ec4b6" },
+        { name:"アイボリー", hex:"#f4f1de" },
+        { name:"ライトグレー", hex:"#e5e7eb" }
+      ],
+      心身: [
+        { name:"スカイ", hex:"#64b5f6" },
+        { name:"アクア", hex:"#00bcd4" },
+        { name:"ベージュ", hex:"#d7ccc8" },
+        { name:"サンド", hex:"#c2b280" }
+      ],
+      自分: [
+        { name:"ゴールド", hex:"#c9a227" },
+        { name:"オレンジ", hex:"#fb8c00" },
+        { name:"ブラウン", hex:"#6d4c41" },
+        { name:"ブラック", hex:"#111111" }
+      ]
     };
 
-    // ここが「運勢の中身」：日付で変わる（簡易生成）
+    // 方位（簡易：日付シードで回す）
+    const directions = ["北","北東","東","南東","南","南西","西","北西"];
+
+    // 文章テンプレ（カテゴリ別に増量）
+    const goodByCat = {
+      恋愛: [
+        "目線を合わせて話すと距離が縮まる",
+        "短い返信でも温度感が伝わる",
+        "相手のペースに寄せると愛される",
+        "会う約束は“時間”より“目的”を決めると◎",
+        "褒め言葉は一言で刺さる",
+        "今日は素直な一言が効く"
+      ],
+      仕事: [
+        "先に段取りを整えるほど勝ちやすい",
+        "数字を一つだけ押さえると迷いが消える",
+        "結論→理由→次の一手の順で伝えると通る",
+        "早めの確認がミスを減らす",
+        "今日は“仕上げ”より“詰め”が吉",
+        "相手の不安を先に潰すと決まりやすい"
+      ],
+      対人: [
+        "最初の挨拶が場の空気を決める",
+        "相手の言葉を1回言い換えると信頼が増える",
+        "お願いは短く、感謝は長く",
+        "返事は速さより“やわらかさ”が鍵",
+        "今日は“聞く7：話す3”が吉",
+        "紹介・つなぎ役が運を上げる"
+      ],
+      心身: [
+        "小さく休むほど後半が伸びる",
+        "水分と深呼吸で流れが戻る",
+        "体を温めると判断が冴える",
+        "散歩5分で気分が整う",
+        "今日は“無理しない”が最大の吉",
+        "目を休めるだけで集中が戻る"
+      ],
+      自分: [
+        "ひとつ手放すとスペースが生まれる",
+        "好きなものを1つ選ぶと芯が立つ",
+        "整頓は運の呼吸を整える",
+        "小さな挑戦が次の扉になる",
+        "今日は“決める”より“選び直す”が吉",
+        "自分を褒める言葉を1つ用意すると強くなる"
+      ]
+    };
+
+    const ngByCat = {
+      恋愛: [
+        "詮索しすぎない（空白も優しさ）",
+        "試すような言い方は控える",
+        "焦って答えを迫らない",
+        "過去の話を掘り返しすぎない",
+        "寂しさで連投しない",
+        "相手の反応を深読みしない"
+      ],
+      仕事: [
+        "勢いで即決しない（1回寝かせる）",
+        "詰めが甘いまま送信しない",
+        "言い訳から入らない",
+        "タスクを増やしすぎない",
+        "“全部やる”をやめる",
+        "勝ち筋の薄い案件に時間を吸われない"
+      ],
+      対人: [
+        "噂話に乗らない",
+        "正しさで押し切らない",
+        "反射で否定しない",
+        "結論を急がせない",
+        "相手の弱点に触れない",
+        "場を支配する話し方をしない"
+      ],
+      心身: [
+        "夜更かししない",
+        "空腹のまま判断しない",
+        "コーヒーで誤魔化しすぎない",
+        "肩に力を入れっぱなしにしない",
+        "“我慢”を美徳にしない",
+        "寝不足で攻めない"
+      ],
+      自分: [
+        "比較で自分を削らない",
+        "やる前から諦めない",
+        "完璧主義に戻らない",
+        "後回しで不安を増やさない",
+        "スマホ見すぎに注意",
+        "自分の価値を下げる言い方をしない"
+      ]
+    };
+
+    const adviceByCat = {
+      恋愛: [
+        "今日は“短く優しく”が最強。語尾を柔らかく。",
+        "会うなら「何したい？」を先に決めると濃くなる。",
+        "返信は1回深呼吸してから。温度差が消える。",
+        "甘えは一言で。長文は逆効果になりやすい日。",
+        "今日は相手を“安心させる言葉”を一つ。"
+      ],
+      仕事: [
+        "上から順にやるより「一番詰まる所」から潰す。",
+        "提案は2択にすると決まりやすい日。",
+        "今日は“確認”が売上。送る前に一度読み返す。",
+        "クロージングは“次の一歩”を具体化すると強い。",
+        "結論を先に置くと、話が一気に通る。"
+      ],
+      対人: [
+        "雑談は短く、要点は丁寧に。信頼が積み上がる。",
+        "相手の言葉を繰り返すだけで空気が良くなる日。",
+        "頼みごとは「いつまでに・何を」を一行で。",
+        "今日は“聞く側”に回ると情報が入る。",
+        "ありがとうを“具体的に”言うと関係が伸びる。"
+      ],
+      心身: [
+        "疲れのサインを早めに拾う日。5分休憩を入れる。",
+        "温かい飲み物が吉。集中が戻りやすい。",
+        "歩く→水→深呼吸、で運の流れを整える。",
+        "無理な予定は削ってOK。回復が最優先。",
+        "今日は“減らす”が正解。予定を1つ軽くする。"
+      ],
+      自分: [
+        "今日は“選び直し”が吉。方向転換しても大丈夫。",
+        "小さく片づけると心が軽くなる日。",
+        "やりたいことを1つだけ先にやると運が動く。",
+        "自分を褒める言葉を1つ用意すると強くなる。",
+        "完璧を捨てて“7割で出す”と前に進む。"
+      ]
+    };
+
+    const oneLiners = [
+      "今日は“整える”が勝ち筋。",
+      "急がなくていい。丁寧が近道。",
+      "小さく動くほど運が開く。",
+      "言葉を柔らかくすると全部うまくいく。",
+      "休むのも立派な前進。",
+      "一つだけ決めると、全部が軽くなる。"
+    ];
+
+    // ===== 便利関数 =====
+    function pad2(n){ return String(n).padStart(2, "0"); }
+    function fmtDateJP(d){
+      const w = ["日","月","火","水","木","金","土"][d.getDay()];
+      return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${w}）`;
+    }
+    function dayOfYear(date){
+      const start = new Date(date.getFullYear(), 0, 1);
+      return Math.floor((date - start) / 86400000); // 0..364
+    }
+    function pick(arr, seed){ return arr[seed % arr.length]; }
+
     function fortuneFor(date){
-      const seed = (date.getMonth()+1) * 100 + date.getDate();
+      const doy = dayOfYear(date);
+      const m = date.getMonth();
+      const d = date.getDate();
+      const w = date.getDay();
 
-      const goodList = [
-        "ランチの誘いが良い刺激に",
-        "連絡がスムーズに進む",
-        "片付けが気分転換になる",
-        "短い散歩で集中が戻る",
-        "ひとつだけ片づけると流れが良い",
-        "丁寧な返事が信頼につながる",
-      ];
-      const ngList = [
-        "噂話には加わらないこと",
-        "急いで結論を出さない",
-        "勢いで買い物しない",
-        "言い過ぎに注意",
-        "睡眠を削らない",
-        "比べすぎない",
-      ];
-      const categoryList = ["対人","仕事","自分"];
+      const category = categoryByDow[w];
+      const theme = monthThemes[m];
 
-      const good = goodList[seed % goodList.length];
-      const ng = ngList[(seed * 3) % ngList.length];
-      const category = categoryList[seed % categoryList.length];
-      const luckyColor = colorByCategory[category] || "ホワイト";
+      const luckyColor = pick(palette[category], doy + m*7 + d);
+      const good = pick(goodByCat[category], doy + 11);
+      const ng   = pick(ngByCat[category], doy + 37);
+      const advice = pick(adviceByCat[category], doy + 101);
+      const oneLiner = pick(oneLiners, doy + m);
+
+      const direction = directions[(doy + m) % directions.length];
 
       const tips = [
-        "やることは1つに絞る",
-        "返信は短くてもOK",
-        "水分を意識してとる",
-        "今日は「整える」を意識する",
+        "今日の一手：まず1つだけ終わらせる",
+        "連絡は短くてもOK（温度感重視）",
+        "余裕がない時は“やらない”を決める",
+        "小さな整頓が運の流れを変える"
       ];
 
-      return { good, ng, category, luckyColor, tips };
+      return { theme, category, good, ng, luckyColor, direction, advice, oneLiner, tips };
     }
 
-    // ===== カレンダー描画 =====
+    // ===== UI参照 =====
+    const monthThemeChip = document.getElementById("monthThemeChip");
+    const priorityChip = document.getElementById("priorityChip");
+
+    const monthSelect = document.getElementById("monthSelect");
     const monthTitle = document.getElementById("monthTitle");
     const calGrid = document.getElementById("calGrid");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-
-    const monthThemeChip = document.getElementById("monthTheme");
-    const priorityChip = document.getElementById("priorityChip");
 
     const selectedDateText = document.getElementById("selectedDateText");
     const directionText = document.getElementById("directionText");
+
+    const fortuneTitle = document.getElementById("fortuneTitle");
     const goodText = document.getElementById("goodText");
     const ngText = document.getElementById("ngText");
     const luckyColorChip = document.getElementById("luckyColorChip");
     const categoryChip = document.getElementById("categoryChip");
+    const themeChip = document.getElementById("themeChip");
+    const adviceText = document.getElementById("adviceText");
+    const oneLinerText = document.getElementById("oneLinerText");
     const tipsList = document.getElementById("tipsList");
 
-    let viewMonth = 0; // 0=1月
-    let selected = new Date(YEAR, 0, 1);
-
-    // 今日（2026年以外なら 2026/1/1 にする）
+    // ===== 初期日付（今日が2026でなければ 2026/1/1） =====
     const now = new Date();
     const today = (now.getFullYear() === YEAR) ? now : new Date(YEAR, 0, 1);
 
-    function fmtDate(d){
-      const y = d.getFullYear();
-      const m = d.getMonth()+1;
-      const day = d.getDate();
-      const w = ["日","月","火","水","木","金","土"][d.getDay()];
-      return `${y}年${m}月${day}日（${w}）`;
+    let viewMonth = today.getMonth();
+    let selected = new Date(YEAR, today.getMonth(), today.getDate());
+
+    // month select options
+    for (let m = 0; m < 12; m++){
+      const opt = document.createElement("option");
+      opt.value = String(m);
+      opt.textContent = `${m+1}月`;
+      monthSelect.appendChild(opt);
     }
 
     function updateFortune(d){
-      selectedDateText.textContent = fmtDate(d);
-      directionText.textContent = getDirection(d);
-
       const f = fortuneFor(d);
+
+      fortuneTitle.textContent = "今日の運勢";
+      selectedDateText.textContent = fmtDateJP(d);
+      directionText.textContent = f.direction;
+
       goodText.textContent = f.good;
       ngText.textContent = f.ng;
-      luckyColorChip.textContent = `ラッキーカラー：${f.luckyColor}`;
+
+      luckyColorChip.innerHTML = `<span class="swatch" style="--swatch:${f.luckyColor.hex}"></span>ラッキーカラー：${f.luckyColor.name}`;
       categoryChip.textContent = `カテゴリ：${f.category}`;
+      themeChip.textContent = `テーマ：${f.theme}`;
+
+      adviceText.textContent = f.advice;
+      oneLinerText.textContent = f.oneLiner;
+
+      // top chips
+      monthThemeChip.textContent = `今月のテーマ：${monthThemes[d.getMonth()]}`;
+      priorityChip.textContent = `優先：${categoryByDow[new Date(YEAR, d.getMonth(), 1).getDay()] === "恋愛" ? "恋愛" : "バランス"}`;
 
       tipsList.innerHTML = "";
       f.tips.forEach(t=>{
@@ -347,22 +565,23 @@
         li.textContent = t;
         tipsList.appendChild(li);
       });
-
-      // 月のテーマ・優先
-      const m = d.getMonth();
-      monthThemeChip.textContent = `今月のテーマ：${monthThemes[m]}`;
-      priorityChip.textContent = `優先：${monthPriority[m]}`;
     }
 
     function renderCalendar(){
+      monthSelect.value = String(viewMonth);
       monthTitle.textContent = `${YEAR}年${viewMonth+1}月`;
+
+      // month chips
+      monthThemeChip.textContent = `今月のテーマ：${monthThemes[viewMonth]}`;
+      priorityChip.textContent = `優先：${["恋愛","仕事","対人","心身","自分"][viewMonth % 5]}`;
+
       calGrid.innerHTML = "";
 
       const first = new Date(YEAR, viewMonth, 1);
       const lastDay = new Date(YEAR, viewMonth+1, 0).getDate();
       const startDow = first.getDay(); // 0=日
 
-      // 空白セル
+      // blanks
       for(let i=0;i<startDow;i++){
         const blank = document.createElement("div");
         blank.className = "day muted";
@@ -376,11 +595,20 @@
         cell.className = "day";
         cell.textContent = day;
 
-        // 今日マーク
+        // small mark if category=恋愛（ちょいヒント）
+        const f = fortuneFor(d);
+        if (f.category === "恋愛"){
+          const tiny = document.createElement("span");
+          tiny.className = "tiny";
+          tiny.style.background = "rgba(236,64,122,.18)";
+          cell.appendChild(tiny);
+        }
+
+        // today marker
         if(d.toDateString() === today.toDateString()){
           cell.classList.add("today");
         }
-        // 選択中
+        // selected
         if(d.toDateString() === selected.toDateString()){
           cell.classList.add("selected");
         }
@@ -388,37 +616,51 @@
         cell.addEventListener("click", ()=>{
           selected = d;
           updateFortune(selected);
-          renderCalendar();
+          renderCalendar(); // refresh highlight
         });
 
         calGrid.appendChild(cell);
       }
-
-      // チップ更新
-      monthThemeChip.textContent = `今月のテーマ：${monthThemes[viewMonth]}`;
-      priorityChip.textContent = `優先：${monthPriority[viewMonth]}`;
     }
 
-    prevBtn.addEventListener("click", ()=>{
+    // controls
+    document.getElementById("prevBtn").addEventListener("click", ()=>{
       viewMonth = (viewMonth + 11) % 12;
-      // 表示月が変わったら、その月の1日に寄せる
       selected = new Date(YEAR, viewMonth, 1);
       updateFortune(selected);
       renderCalendar();
+      window.scrollTo({ top: 0, behavior:"smooth" });
     });
 
-    nextBtn.addEventListener("click", ()=>{
+    document.getElementById("nextBtn").addEventListener("click", ()=>{
       viewMonth = (viewMonth + 1) % 12;
       selected = new Date(YEAR, viewMonth, 1);
       updateFortune(selected);
       renderCalendar();
+      window.scrollTo({ top: 0, behavior:"smooth" });
     });
 
-    // 初期表示：今日（2026年でなければ 2026/1/1）
-    viewMonth = today.getMonth();
-    selected = new Date(YEAR, today.getMonth(), today.getDate());
+    monthSelect.addEventListener("change", (e)=>{
+      viewMonth = Number(e.target.value);
+      selected = new Date(YEAR, viewMonth, 1);
+      updateFortune(selected);
+      renderCalendar();
+      window.scrollTo({ top: 0, behavior:"smooth" });
+    });
+
+    document.getElementById("goTodayBtn").addEventListener("click", ()=>{
+      viewMonth = today.getMonth();
+      selected = new Date(YEAR, today.getMonth(), today.getDate());
+      updateFortune(selected);
+      renderCalendar();
+      // scroll to calendar top
+      window.scrollTo({ top: 0, behavior:"smooth" });
+    });
+
+    // init
     updateFortune(selected);
     renderCalendar();
   </script>
 </body>
 </html>
+```0
